@@ -414,7 +414,7 @@ with tabs[4]:
     else:
         st.warning("Please select at least one stock.")
 # News
-  with tabs[5]:
+with tabs[5]:
     st.header("📡 News")
     st.write("Stay updated with the latest news on your selected stock.")
 
@@ -465,6 +465,7 @@ with tabs[4]:
             st.error(f"An error occurred while fetching news: {e}")
     else:
         st.info("Enter a stock ticker above to fetch the latest news.")
+
 
 # Contact us 
 with tabs[6]:
