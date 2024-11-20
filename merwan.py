@@ -150,18 +150,33 @@ with tabs[1]:
 
     if ticker:
         analyze_stock_fundamentals(ticker)      
-# Technical Analysis
+# Technical Analysis Tab
 with tabs[2]:
     st.header("Stock Information")
     st.write("Analyze and visualize stock performance with indicators and recommendations.")
-    # Ticker input
-    ticker_symbol = st.text_input("Enter Stock Ticker (e.g., AAPL, MSFT):", "AAPL", key="ticker")
+   
+    # Fetch S&P 500 Tickers from Wikipedia
+    try:
+        sp500_url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
+        sp500_table = pd.read_html(sp500_url, header=0)[0]  # Read the table from Wikipedia
+        sp500_tickers = sorted(sp500_table['Symbol'].tolist())  # Get tickers
+    except Exception as e:
+        st.error("Failed to fetch S&P 500 tickers. Using a fallback list.")
+        sp500_tickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"]
+
+    # Ticker selection
+    try:
+        ticker_symbol = st.selectbox("Select Stock Ticker", sp500_tickers, index=sp500_tickers.index("AAPL"))
+    except ValueError:
+        ticker_symbol = st.selectbox("Select Stock Ticker", sp500_tickers, index=0)
+
     # Date slicer
     st.write("### Select Date Range")
     today = date.today()
     min_date = today - timedelta(days=365 * 5)  # Allow data up to 5 years back
     max_date = today
-    date_range = st.slider("Drag to select the range:",
+    date_range = st.slider(
+        "Drag to select the range:",
         min_value=min_date,
         max_value=max_date,
         value=(today - timedelta(days=365), today),
@@ -181,6 +196,7 @@ with tabs[2]:
         "MACD": st.checkbox("Moving Average Convergence Divergence (MACD)", key="show_macd"),
         "VWAP": st.checkbox("Volume Weighted Average Price (VWAP)", key="show_vwap"),
     }
+
     if ticker_symbol:
         try:
             # Fetch stock data
@@ -274,9 +290,9 @@ with tabs[2]:
                         st.write(f"Sell Signals: {total_indicators - buy_signals}")
         
                         if buy_signals > total_indicators / 2:
-                            st.success("**Recommendation: Buy**")
+                            st.success("**Recommendation: BUY**")
                         else:
-                            st.warning("**Recommendation: Sell**")
+                            st.warning("**Recommendation: SELL**")
 
                 # Update layout to display multiple y-axes for different indicators
                 fig.update_layout(
@@ -286,21 +302,7 @@ with tabs[2]:
                     yaxis2=dict(
                         title="RSI",
                         overlaying="y",
-                        side="right"
-                    ),
-                    yaxis3=dict(
-                        title="MACD",
-                        overlaying="y",
-                        side="right",
-                        position=0.85
-                    ),
-                    legend=dict(x=0, y=1.1, orientation="h")
-                )
-
-                st.plotly_chart(fig)
-
-        except Exception as e:
-            st.error(f"Failed to retrieve data for {ticker_symbol}. Error: {e}")
+                       
 # Optimal Risk Portfolio
 with tabs[3]:
     
