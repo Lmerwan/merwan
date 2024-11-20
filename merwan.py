@@ -320,8 +320,6 @@ with tabs[2]:
 
 # Optimal Risk Portfolio
 with tabs[3]:
-    
-    
     st.title("Optimal Risk Portfolio for Selected Stocks")
 
     # Portfolio Settings
@@ -364,17 +362,16 @@ with tabs[3]:
 
                 # Risk-Return Map
                 st.write("### Risk-Return Map")
-
-                plt.rcParams['font.family'] = 'Tahoma' 
-                plt.rcParams['axes.facecolor'] = '#EAEAF2'  
-                plt.rcParams['figure.facecolor'] = '#FFFFFF'
-                
-                fig, ax = plt.subplots(figsize=(10,8))
-                sc = ax.scatter(returns.std(), returns.mean(), s=100, alpha=0.7, edgecolors="k", c = returns.mean(), cmap = 'coolwarm', marker = 'o')
+                fig, ax = plt.subplots(figsize=(8, 6))  # Smaller figure size
+                sc = ax.scatter(
+                    returns.std(), returns.mean(), 
+                    s=100, alpha=0.7, edgecolors="k", 
+                    c=returns.mean(), cmap='coolwarm', marker='o'
+                )
                 for stock, std, mean in zip(returns.columns, returns.std(), returns.mean()):
-                    ax.annotate(stock, (std, mean), textcoords="offset points", xytext=(1,1), ha='right')
+                    ax.annotate(stock, (std, mean), textcoords="offset points", xytext=(1, 1), ha='right')
                 ax.set(title="Risk-Return Map", xlabel="Risk (Standard Deviation)", ylabel="Expected Returns (Mean)")
-                ax.xaxis.set_major_formatter(FormatStrFormatter('%.4f')) 
+                ax.xaxis.set_major_formatter(FormatStrFormatter('%.4f'))
                 ax.yaxis.set_major_formatter(FormatStrFormatter('%.4f'))
                 cb = plt.colorbar(sc)
                 cb.set_label('Expected Returns')
@@ -382,11 +379,9 @@ with tabs[3]:
                 st.pyplot(fig)
 
                 # Correlation Matrix Heatmap
-                correlation_matrix = returns.corr()
-                sns.set(font_scale = 1)
-                
                 st.write("### Stock Price Correlation")
-                fig, ax = plt.subplots(figsize=(6, 4))
+                correlation_matrix = returns.corr()
+                fig, ax = plt.subplots(figsize=(5, 3))  # Smaller figure size
                 sns.heatmap(correlation_matrix, annot=True, cmap="coolwarm", fmt=".4f", linewidths=0.5, ax=ax)
                 ax.set_title("Correlation Matrix", fontsize=8)
                 st.pyplot(fig)
@@ -396,7 +391,7 @@ with tabs[3]:
                 for i, stock_x in enumerate(stocks):
                     for j, stock_y in enumerate(stocks):
                         if i < j:
-                            fig, ax = plt.subplots(figsize=(10, 8))
+                            fig, ax = plt.subplots(figsize=(8, 6))  # Smaller figure size
                             sns.scatterplot(x=data[stock_x], y=data[stock_y], alpha=0.7, ax=ax)
                             ax.set_title(f"Correlation: {stock_x} vs {stock_y} ({correlation_matrix.loc[stock_x, stock_y]:.2f})")
                             ax.set_xlabel(stock_x)
@@ -405,6 +400,7 @@ with tabs[3]:
 
         except Exception as e:
             st.error(f"An error occurred: {e}")
+
 # Comparison Tab
 with tabs[4]:
     st.header("Comparison")
