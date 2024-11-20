@@ -302,7 +302,22 @@ with tabs[2]:
                     yaxis2=dict(
                         title="RSI",
                         overlaying="y",
-                    )
+                        side="right",
+                    ),
+                    yaxis3=dict(
+                        title="MACD",
+                        overlaying="y",
+                        side="right",
+                        position=0.85,
+                    ),
+                    legend=dict(x=0, y=1.1, orientation="h"),
+                )
+
+                st.plotly_chart(fig)
+
+        except Exception as e:
+            st.error(f"Failed to retrieve data for {ticker_symbol}. Error: {e}")
+
 # Optimal Risk Portfolio
 with tabs[3]:
     
