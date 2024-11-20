@@ -579,7 +579,8 @@ with tabs[5]:
     
     # Prediction button
     if st.button("Predict"):
-        stock_price_prediction_with_validation(ticker_for_prediction, prediction_days)
+        stock_price_prediction_with_indicators(ticker_for_prediction, prediction_days)
+
 # News
 with tabs[6]:
     st.header("📰 Stock News")
