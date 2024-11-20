@@ -458,7 +458,7 @@ with tabs[5]:
     
     # Prediction button
     if st.button("Predict"):
-
+        stock_price_prediction_with_validation(ticker_for_prediction, prediction_days)
 
 # Function for stock price prediction using LSTM
 def stock_price_prediction_with_validation(ticker, prediction_days=30):
