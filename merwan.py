@@ -11,16 +11,18 @@ import feedparser
 import seaborn as sns
 from bs4 import BeautifulSoup
 import riskfolio as rp
+# Specify title and logo for the webpage.
+# Set up your web app
 import streamlit as st
 import sqlite3
 import yfinance as yf
-from textblob import TextBlob  # Import TextBlob for sentiment analysis
-from datetime import date, timedelta, datetime
-
+import datetime
+from datetime import date, timedelta
+from datetime import datetime
+from matplotlib.ticker import FormatStrFormatter
+from textblob import TextBlob  
 ad.user_cache_dir = lambda *args: "/tmp"
-# Set up your web app
-
-# Ensure this is the very first Streamlit command
+#Specify title and logo for the webpage.
 st.set_page_config(
     page_title="Investments App",
     page_icon="chart_with_upwards_trend",
@@ -28,167 +30,25 @@ st.set_page_config(
     initial_sidebar_state="expanded",
     menu_items=None
 )
-
-# CSS Styles
-def inject_css():
-    st.markdown("""
-    <style>
-        /* General Page Styling */
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f6fa;
-            color: #333;
-            margin: 0;
-            padding: 0;
-        }
-
-        /* Header Section */
-        .header {
-            background-color: #1f4e79;
-            padding: 10px 20px;
-            border-radius: 10px;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .header h1 {
-            color: white;
-            font-size: 36px;
-            margin: 0;
-        }
-
-        /* Ticker Section */
-        .ticker-section {
-            background-color: #ffffff;
-            padding: 15px 20px;
-            border-bottom: 1px solid #e3e3e3;
-        }
-
-        .ticker-section h2 {
-            font-size: 20px;
-            margin: 0;
-            font-weight: bold;
-            color: #1a73e8;
-        }
-
-        .ticker-section .metrics {
-            display: flex;
-            align-items: center;
-            margin-top: 10px;
-            gap: 10px;
-        }
-
-        .ticker-section .price {
-            font-size: 32px;
-            font-weight: bold;
-            color: #d32f2f;
-        }
-
-        /* Chart Section */
-        .chart-container {
-            padding: 20px;
-            background-color: #ffffff;
-            margin: 20px auto;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        .chart-container .chart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .chart-container .chart-header h3 {
-            font-size: 18px;
-            font-weight: bold;
-        }
-
-        .chart-container canvas {
-            width: 100%;
-            height: 300px;
-        }
-
-        /* Footer Section */
-        .footer {
-            background-color: #1d1f22;
-            color: white;
-            text-align: center;
-            padding: 10px 0;
-            font-size: 12px;
-        }
-
-        /* Highlight Colors */
-        .highlight-positive {
-            color: #388e3c; /* Green for positive changes */
-        }
-
-        .highlight-neutral {
-            color: #616161; /* Grey for neutral changes */
-        }
-
-        .highlight-negative {
-            color: #d32f2f; /* Red for negative changes */
-        }
-
-        /* News Cards */
-        .news-card {
-            border: 1px solid #ddd;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-        }
-
-        .news-card h4 {
-            margin: 0;
-            font-size: 18px;
-            color: #333;
-        }
-
-        .news-card p {
-            margin: 5px 0;
-        }
-
-        .news-card a {
-            color: #1a73e8;
-            text-decoration: none;
-        }
-
-        .news-card a:hover {
-            text-decoration: underline;
-        }
-    </style>
-    """, unsafe_allow_html=True)
-
-# Inject CSS
-inject_css()
-
-# Set up the page
-st.set_page_config(
-    page_title="Investments App",
-    page_icon="📈",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-# Define header
+# Define a global header for all pages
 def render_header(title):
     st.markdown(f"""
-    <div class="header">
-        <h1>{title}</h1>
+    <div style="background-color:#1f4e79;padding:10px;border-radius:5px">
+        <h1 style="color:white;text-align:center;">{title}</h1>
     </div>
     """, unsafe_allow_html=True)
-
-# Define footer
+# Define a global footer for the app
 def render_footer():
     st.markdown("""
     ---
-    <div class="footer">
+    <div style="text-align:center;">
         <small>© 2024 International University of Japan. All rights reserved.</small>
     </div>
     """, unsafe_allow_html=True)
 
+st.markdown( """ 
+            <style> .stPlotlyChart { max-width: 300px; } </style> """, 
+            unsafe_allow_html=True )
 # Page Title
 render_header("S&P 500 Features Analysis")
 # Create tabs
