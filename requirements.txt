@@ -11,3 +11,5 @@ feedparser
 requests
 beautifulsoup4
 appdirs
+tensorflow
+scikit-learn
