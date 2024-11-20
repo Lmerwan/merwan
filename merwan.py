@@ -502,9 +502,12 @@ def stock_price_prediction_with_validation(ticker, prediction_days=30):
         train_rmse = np.sqrt(mean_squared_error(y_train, train_predictions))
         test_predictions = model.predict(X_test)
         test_rmse = np.sqrt(mean_squared_error(y_test, test_predictions))
+        accuracy = 100 - (test_rmse / np.mean(scaler.inverse_transform(test_data)) * 100)
+
         st.write(f"**Model Evaluation:**")
         st.write(f"Training RMSE: {train_rmse:.2f}")
         st.write(f"Testing RMSE: {test_rmse:.2f}")
+        st.write(f"Prediction Accuracy: {accuracy:.2f}%")
 
         # Inverse scale test predictions
         test_predictions_rescaled = scaler.inverse_transform(test_predictions)
@@ -522,7 +525,10 @@ def stock_price_prediction_with_validation(ticker, prediction_days=30):
         # Scale back future predictions
         future_predictions_rescaled = scaler.inverse_transform(np.array(future_predictions).reshape(-1, 1))
         future_dates = pd.date_range(data.index[-1], periods=prediction_days + 1, freq='B')[1:]
-        future_prediction_df = pd.DataFrame({'Date': future_dates, 'Predicted Price': future_predictions_rescaled.flatten()})
+        future_prediction_df = pd.DataFrame({
+            'Date': future_dates,
+            'Predicted Price': future_predictions_rescaled.flatten()
+        })
 
         # Plot test predictions vs actual
         st.write("### Test Predictions vs Actual Prices")
@@ -535,6 +541,10 @@ def stock_price_prediction_with_validation(ticker, prediction_days=30):
         # Plot future predictions
         st.write("### Future Price Predictions")
         st.line_chart(future_prediction_df.set_index('Date'))
+
+        # Display table of predicted prices
+        st.write("### Predicted Prices for Future Days")
+        st.table(future_prediction_df)
 
     except Exception as e:
         st.error(f"An error occurred: {e}")
