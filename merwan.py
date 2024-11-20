@@ -57,7 +57,16 @@ st.markdown( """
 # Page Title
 render_header("S&P 500 Features Analysis")
 # Create tabs
-tabs = st.tabs(["🏠Home","🔎Fundamental Analysis", "📈Technical Analysis", "🚩Risk Portfolio","⚖️Comparison", "🌐News", "📧Contacts"])
+tabs = st.tabs([
+    "🏠Home",
+    "🔎Fundamental Analysis",
+    "📈Technical Analysis",
+    "🚩Risk Portfolio",
+    "⚖️Comparison",
+    "📈Predictions",
+    "🌐News",
+    "📧Contacts"
+])
 #source: https://emojidb.org/invest-emojis
 # Home
 with tabs[0]:
