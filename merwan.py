@@ -439,7 +439,7 @@ with tabs[4]:
         st.warning("Please select at least one stock.")
 
 #Prediction 
-with tabs[7]:
+with tabs[5]:
     st.subheader("📈 Stock Price Predictions")
     st.write("Use machine learning to predict stock prices for the next few days.")
     ticker_for_prediction = st.text_input("Enter stock ticker for prediction:", key="prediction_ticker", value="AAPL")
@@ -537,7 +537,7 @@ def stock_price_prediction_with_validation(ticker, prediction_days=30):
         st.error(f"An error occurred: {e}")
 
 # News
-with tabs[5]:
+with tabs[6]:
     st.header("📰 Stock News")
     st.write("Stay updated with the latest news on your selected stock.")
 
@@ -596,7 +596,7 @@ with tabs[5]:
         st.info("Enter a stock ticker above to fetch the latest news.")
    
 # Technical Analysis
-with tabs[6]:
+with tabs[7]:
     st.title("Contact Us")
     # University Information
     st.subheader("International University of Japan")
