@@ -448,17 +448,6 @@ with tabs[4]:
         st.warning("Please select at least one stock.")
 
 # Predictions Tab (Index 5)
-with tabs[5]:
-    st.header("📈 Stock Price Predictions")
-    st.write("Use machine learning to predict stock prices for the next few days.")
-    
-    # User input: Stock ticker and prediction days
-    ticker_for_prediction = st.text_input("Enter stock ticker for prediction:", key="prediction_ticker", value="AAPL")
-    prediction_days = st.slider("Prediction Days", 5, 60, 30)
-    
-    # Prediction button
-    if st.button("Predict"):
-        stock_price_prediction_with_validation(ticker_for_prediction, prediction_days)
 
 # Function for stock price prediction using LSTM
 def stock_price_prediction_with_validation(ticker, prediction_days=30):
@@ -550,7 +539,17 @@ def stock_price_prediction_with_validation(ticker, prediction_days=30):
     except Exception as e:
         st.error(f"An error occurred: {e}")
 
-
+with tabs[5]:
+    st.header("📈 Stock Price Predictions")
+    st.write("Use machine learning to predict stock prices for the next few days.")
+    
+    # User input: Stock ticker and prediction days
+    ticker_for_prediction = st.text_input("Enter stock ticker for prediction:", key="prediction_ticker", value="AAPL")
+    prediction_days = st.slider("Prediction Days", 5, 60, 30)
+    
+    # Prediction button
+    if st.button("Predict"):
+        stock_price_prediction_with_validation(ticker_for_prediction, prediction_days)
 # News
 with tabs[6]:
     st.header("📰 Stock News")
