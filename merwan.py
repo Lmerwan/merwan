@@ -302,7 +302,7 @@ with tabs[2]:
                     yaxis2=dict(
                         title="RSI",
                         overlaying="y",
-                       
+                    )
 # Optimal Risk Portfolio
 with tabs[3]:
     
