@@ -362,7 +362,7 @@ with tabs[3]:
 
                 # Risk-Return Map
                 st.write("### Risk-Return Map")
-                fig, ax = plt.subplots(figsize=(8, 6))  # Smaller figure size
+                fig, ax = plt.subplots(figsize=(6, 3))  # Smaller figure size
                 sc = ax.scatter(
                     returns.std(), returns.mean(), 
                     s=100, alpha=0.7, edgecolors="k", 
