@@ -461,7 +461,7 @@ with tabs[4]:
         st.warning("Please select at least one stock.")
 
 # Predictions Tab (Index 5)
-# def stock_price_prediction_with_indicators(ticker, prediction_days=30):
+#def stock_price_prediction_with_indicators(ticker, prediction_days=30):
     try:
         # Fetch data
         stock = yf.Ticker(ticker)
