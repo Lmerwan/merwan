@@ -447,25 +447,30 @@ with tabs[4]:
     else:
         st.warning("Please select at least one stock.")
 
-#Prediction 
+# Predictions Tab (Index 5)
 with tabs[5]:
-    st.subheader("📈 Stock Price Predictions")
+    st.header("📈 Stock Price Predictions")
     st.write("Use machine learning to predict stock prices for the next few days.")
+    
+    # User input: Stock ticker and prediction days
     ticker_for_prediction = st.text_input("Enter stock ticker for prediction:", key="prediction_ticker", value="AAPL")
     prediction_days = st.slider("Prediction Days", 5, 60, 30)
+    
+    # Prediction button
     if st.button("Predict"):
         stock_price_prediction_with_validation(ticker_for_prediction, prediction_days)
 
+# Function for stock price prediction using LSTM
 def stock_price_prediction_with_validation(ticker, prediction_days=30):
     try:
         # Fetch data
         stock = yf.Ticker(ticker)
-        data = stock.history(period="5y")
+        data = stock.history(period="5y")  # Get 5 years of historical data
         if data.empty:
             st.error("No data available for prediction.")
             return
 
-        # Preprocessing
+        # Preprocessing: Scale data
         st.write(f"### Stock Price Prediction for {ticker.upper()}")
         close_prices = data['Close'].values.reshape(-1, 1)
         scaler = MinMaxScaler(feature_range=(0, 1))
@@ -544,6 +549,7 @@ def stock_price_prediction_with_validation(ticker, prediction_days=30):
 
     except Exception as e:
         st.error(f"An error occurred: {e}")
+
 
 # News
 with tabs[6]:
