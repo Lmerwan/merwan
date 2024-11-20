@@ -491,8 +491,8 @@ with tabs[5]:
     else:
         st.info("Enter a stock ticker above to fetch the latest news.")
    
-# Technical Analysis
-with tabs[6]:
+# Contact us 
+with tabs[7]:
     st.title("Contact Us")
     # University Information
     st.subheader("International University of Japan")
