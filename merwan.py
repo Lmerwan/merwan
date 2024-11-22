@@ -461,16 +461,16 @@ with tabs[4]:
         st.warning("Please select at least one stock.")
 
 # Predictions Tab (Index 5)
-def stock_price_prediction_with_indicators(ticker, prediction_days=30):
+def crypto_price_prediction_with_indicators(ticker, prediction_days=30):
     try:
         # Fetch data
-        stock = yf.Ticker(ticker)
-        data = stock.history(period="5y")
+        crypto = yf.Ticker(ticker)
+        data = crypto.history(period="5y")
         if data.empty:
             st.error("No data available for prediction.")
             return
         
-        st.write(f"### Stock Price Prediction for {ticker.upper()} with Technical Indicators")
+        st.write(f"### Cryptocurrency Price Prediction for {ticker.upper()} with Technical Indicators")
         
         # Add Technical Indicators
         data['SMA_50'] = data['Close'].rolling(window=50).mean()
@@ -564,22 +564,22 @@ def stock_price_prediction_with_indicators(ticker, prediction_days=30):
 
     except Exception as e:
         st.error(f"An error occurred: {e}")
-# Tab for Predictions
+
+# Tab for Cryptocurrency Predictions
 with tabs[5]:
-    st.header("📈 Stock Price Predictions")
-    st.write("Use machine learning to predict stock prices for the next few days.")
+    st.header("📈 Cryptocurrency Price Predictions")
+    st.write("Use machine learning to predict cryptocurrency prices for the next few days.")
     
-    sp500_url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies" # Read the table from Wikipedia 
-    sp500_table = pd.read_html(sp500_url, header=0)[0] # Get the symbols and sort them 
-    sp500_tickers = sorted(sp500_table['Symbol'].tolist())
+    crypto_tickers = ["BTC-USD", "ETH-USD", "BNB-USD", "ADA-USD", "XRP-USD"]  # Example crypto tickers
     
-    # User input: Stock ticker and prediction days
-    ticker_for_prediction = st.selectbox("Select stock ticker for prediction:", sp500_tickers, index=sp500_tickers.index("AAPL"))
+    # User input: Cryptocurrency ticker and prediction days
+    ticker_for_prediction = st.selectbox("Select cryptocurrency for prediction:", crypto_tickers, index=0)
     prediction_days = st.slider("Prediction Days", 5, 60, 30)
     
     # Prediction button
     if st.button("Predict"):
-        stock_price_prediction_with_indicators(ticker_for_prediction, prediction_days)
+        crypto_price_prediction_with_indicators(ticker_for_prediction, prediction_days)
+
 
 # News
 with tabs[6]:
