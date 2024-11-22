@@ -461,17 +461,17 @@ with tabs[4]:
         st.warning("Please select at least one stock.")
 
 # Predictions Tab (Index 5)
-def crypto_price_prediction_with_indicators(ticker, prediction_days=30):
+def crypto_price_prediction_with_indicators_and_direction(ticker, prediction_days=30):
     try:
         # Fetch data
-        crypto = yf.Ticker(ticker)
-        data = crypto.history(period="5y")
+        stock = yf.Ticker(ticker)
+        data = stock.history(period="5y")
         if data.empty:
             st.error("No data available for prediction.")
             return
-        
-        st.write(f"### Cryptocurrency Price Prediction for {ticker.upper()} with Technical Indicators")
-        
+
+        st.write(f"### Cryptocurrency Price Prediction for {ticker.upper()} with Technical Indicators and Direction")
+
         # Add Technical Indicators
         data['SMA_50'] = data['Close'].rolling(window=50).mean()
         data['SMA_200'] = data['Close'].rolling(window=200).mean()
@@ -485,19 +485,30 @@ def crypto_price_prediction_with_indicators(ticker, prediction_days=30):
         short_span, long_span, signal_span = 12, 26, 9
         data['MACD'] = data['Close'].ewm(span=short_span).mean() - data['Close'].ewm(span=long_span).mean()
         data['Signal_Line'] = data['MACD'].ewm(span=signal_span).mean()
-        
+        data['VWAP'] = (data['Close'] * data['Volume']).cumsum() / data['Volume'].cumsum()
+
         # Drop NaN rows from indicator calculation
         data = data.dropna()
-        
+
+        # Indicator-based signals
+        data['SMA_Buy'] = (data['Close'] > data['SMA_50']).astype(int)
+        data['RSI_Buy'] = (data['RSI'] < 30).astype(int)
+        data['MACD_Buy'] = (data['MACD'] > data['Signal_Line']).astype(int)
+        data['VWAP_Buy'] = (data['Close'] > data['VWAP']).astype(int)
+
+        # Aggregate voting (more than 2/3 indicators suggest "BUY")
+        data['Consensus'] = (data['SMA_Buy'] + data['RSI_Buy'] + data['MACD_Buy'] + data['VWAP_Buy']) >= 3
+
         # Preprocessing: Scale data
         scaler = MinMaxScaler(feature_range=(0, 1))
         features = data[['Close', 'SMA_50', 'SMA_200', 'RSI', 'MACD']].values
         scaled_data = scaler.fit_transform(features)
-        
+
         # Split into train and test datasets
         train_size = int(len(scaled_data) * 0.8)
         train_data, test_data = scaled_data[:train_size], scaled_data[train_size:]
-        
+        test_consensus = data['Consensus'].iloc[train_size:].values
+
         # Create sequences for training with multiple features
         def create_sequences(data, seq_length=60):
             X, y = [], []
@@ -505,10 +516,10 @@ def crypto_price_prediction_with_indicators(ticker, prediction_days=30):
                 X.append(data[i - seq_length:i])  # Include all features
                 y.append(data[i, 0])  # Target is still the closing price
             return np.array(X), np.array(y)
-        
+
         X_train, y_train = create_sequences(train_data)
         X_test, y_test = create_sequences(test_data)
-        
+
         # Build LSTM model
         model = Sequential([
             LSTM(units=50, return_sequences=True, input_shape=(X_train.shape[1], X_train.shape[2])),
@@ -518,10 +529,10 @@ def crypto_price_prediction_with_indicators(ticker, prediction_days=30):
             Dense(units=1)
         ])
         model.compile(optimizer='adam', loss='mean_squared_error')
-        
+
         # Train model
         model.fit(X_train, y_train, epochs=10, batch_size=32, verbose=1)
-        
+
         # Evaluate model
         test_predictions = model.predict(X_test)
         test_predictions_rescaled = scaler.inverse_transform(
@@ -530,15 +541,14 @@ def crypto_price_prediction_with_indicators(ticker, prediction_days=30):
         actual_prices_rescaled = scaler.inverse_transform(
             np.hstack([y_test.reshape(-1, 1), np.zeros((len(y_test), features.shape[1] - 1))])
         )[:, 0]
-        
-        # Directional Accuracy
-        directional_accuracy = np.mean(
-            np.sign(np.diff(actual_prices_rescaled)) == np.sign(np.diff(test_predictions_rescaled))
-        ) * 100
-        
-        st.write(f"**Model Evaluation:**")
+
+        # Directional Accuracy using Indicator Consensus
+        consensus_direction = test_consensus[:-1] == (np.diff(test_predictions_rescaled) > 0)
+        directional_accuracy = np.mean(consensus_direction) * 100
+
+        st.write(f"**Model Evaluation with Indicator-Based Direction:**")
         st.write(f"Directional Accuracy: {directional_accuracy:.2f}%")
-        
+
         # Prepare future predictions
         recent_data = scaled_data[-60:]
         future_predictions = []
@@ -547,7 +557,7 @@ def crypto_price_prediction_with_indicators(ticker, prediction_days=30):
             future_price = model.predict(input_data, verbose=0)
             future_predictions.append(future_price[0, 0])
             recent_data = np.append(recent_data, [np.hstack([future_price[0, 0], [0] * (features.shape[1] - 1)])], axis=0)
-        
+
         future_predictions_rescaled = scaler.inverse_transform(
             np.hstack([np.array(future_predictions).reshape(-1, 1), np.zeros((len(future_predictions), features.shape[1] - 1))])
         )[:, 0]
@@ -556,7 +566,7 @@ def crypto_price_prediction_with_indicators(ticker, prediction_days=30):
             'Date': future_dates,
             'Predicted Price': future_predictions_rescaled.flatten()
         })
-        
+
         # Plot future predictions
         st.write("### Future Price Predictions")
         st.line_chart(future_prediction_df.set_index('Date'))
@@ -564,21 +574,6 @@ def crypto_price_prediction_with_indicators(ticker, prediction_days=30):
 
     except Exception as e:
         st.error(f"An error occurred: {e}")
-
-# Tab for Cryptocurrency Predictions
-with tabs[5]:
-    st.header("📈 Cryptocurrency Price Predictions")
-    st.write("Use machine learning to predict cryptocurrency prices for the next few days.")
-    
-    crypto_tickers = ["BTC-USD", "ETH-USD", "BNB-USD", "ADA-USD", "XRP-USD"]  # Example crypto tickers
-    
-    # User input: Cryptocurrency ticker and prediction days
-    ticker_for_prediction = st.selectbox("Select cryptocurrency for prediction:", crypto_tickers, index=0)
-    prediction_days = st.slider("Prediction Days", 5, 60, 30)
-    
-    # Prediction button
-    if st.button("Predict"):
-        crypto_price_prediction_with_indicators(ticker_for_prediction, prediction_days)
 
 
 # News
