@@ -523,6 +523,7 @@ def stock_price_prediction_with_validation(ticker, prediction_days=30):
         st.error(f"An error occurred: {e}")
 
 
+
 # News Tab
 with tabs[6]:
     st.header("📰 Stock News")
