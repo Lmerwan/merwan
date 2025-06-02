@@ -1,16 +1,12 @@
-streamlit
+lxml
+pandas
+yfinance
+tensorflow
 matplotlib
 plotly
-pandas
-numpy
 seaborn
-textblob
-riskfolio-lib
-yfinance
+scikit-learn
 feedparser
-requests
 beautifulsoup4
 appdirs
-tensorflow
-scikit-learn
-install lxml
+textblob
