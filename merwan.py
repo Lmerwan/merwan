@@ -423,18 +423,26 @@ with tabs[5]:
     st.header("📈 Stock Price Predictions")
     st.write("Use machine learning to predict stock prices for the next few days.")
     
+    # Fetch S&P 500 Tickers from Wikipedia
     sp500_url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"  # Read the table from Wikipedia
-    sp500_table = pd.read_html(sp500_url, header=0)[0]  # Get the symbols and sort them
-    sp500_tickers = sorted(sp500_table['Symbol'].tolist())
-    
-    # User input: Stock ticker and prediction days
-    ticker_for_prediction = st.selectbox("Select stock ticker for prediction:", sp500_tickers, index=sp500_tickers.index("AAPL"))
-    prediction_days = st.slider("Prediction Days", 5, 60, 30)  # Default to 30 days
-    
-    # Prediction button
-    if st.button("Predict"):
-        # Call the prediction function here for Tab 5
-        stock_price_prediction_with_validation(ticker_for_prediction, prediction_days)
+    try:
+        sp500_table = pd.read_html(sp500_url, header=0)[0]  # Get the symbols and sort them
+        sp500_tickers = sorted(sp500_table['Symbol'].tolist())
+    except Exception as e:
+        st.error(f"Error fetching S&P 500 tickers: {e}")
+        sp500_tickers = []
+
+    if sp500_tickers:
+        # User input: Stock ticker and prediction days
+        ticker_for_prediction = st.selectbox("Select stock ticker for prediction:", sp500_tickers, index=sp500_tickers.index("AAPL") if "AAPL" in sp500_tickers else 0)
+        prediction_days = st.slider("Prediction Days", 5, 60, 30)  # Default to 30 days
+        
+        # Prediction button
+        if st.button("Predict"):
+            stock_price_prediction_with_validation(ticker_for_prediction, prediction_days)
+    else:
+        st.warning("Could not fetch S&P 500 tickers. Please try again later.")
+        
 
 def stock_price_prediction_with_validation(ticker, prediction_days=30):
     try:
@@ -542,6 +550,7 @@ def stock_price_prediction_with_validation(ticker, prediction_days=30):
 
     except Exception as e:
         st.error(f"An error occurred: {e}")
+
 
 # News Tab
 with tabs[6]:
