@@ -1,4 +1,4 @@
-#import packages
+# Import required packages
 import matplotlib.pyplot as plt
 import plotly.graph_objs as go
 import appdirs as ad
@@ -23,8 +23,9 @@ import datetime
 from datetime import date, timedelta
 from datetime import datetime
 from matplotlib.ticker import FormatStrFormatter
-from textblob import TextBlob  
+from textblob import TextBlob
 
+# Setting up user cache directory
 ad.user_cache_dir = lambda *args: "/tmp"
 
 # Specify title and logo for the webpage.
@@ -53,8 +54,10 @@ def render_footer():
     </div>
     """, unsafe_allow_html=True)
 
+# CSS for Plotly charts
 st.markdown(""" 
-            <style> .stPlotlyChart { max-width: 300px; } </style> """, unsafe_allow_html=True)
+            <style> .stPlotlyChart { max-width: 300px; } </style> """, 
+            unsafe_allow_html=True)
 
 # Page Title
 render_header("S&P 500 Features Analysis")
@@ -86,7 +89,7 @@ with tabs[1]:
     st.header("Fundamental Analysis")
     st.write("Analyze a firm's prospects using fundamental analysis. Enter a stock ticker below:")
     ticker = st.text_input("Stock Ticker (e.g., AAPL, MSFT):", value="AAPL")
-
+    
     def analyze_stock_fundamentals(ticker):
         """Perform fundamental analysis for the given stock ticker."""
         try:
@@ -101,7 +104,7 @@ with tabs[1]:
             st.write(f"**Website:** [Visit Website]({info.get('website', '#')})")
             st.subheader(f"Current Price: {data['Close'].iloc[-1]:.2f} USD")
             st.markdown("---")
-
+            
             # Key Financial Metrics
             market_cap = info.get('marketCap', 0) / 1e9
             pe_ratio = info.get('trailingPE', 'N/A')
@@ -113,8 +116,8 @@ with tabs[1]:
                 "Value": [f"${market_cap:.2f}", pe_ratio, forward_pe, pb_ratio, f"{dividend_yield:.2f}%"]
             }
             st.write("### Key Financial Metrics")
-            st.table(key_metrics)
-
+            st.table(key_metrics)    
+            
             # Earnings and Growth
             earnings_growth = info.get('earningsGrowth', 'N/A')
             revenue_growth = info.get('revenueGrowth', 'N/A')
@@ -124,7 +127,7 @@ with tabs[1]:
             }
             st.write("### Earnings and Growth")
             st.table(earnings_growth_data)
-
+            
             # Debt Ratios
             total_debt = info.get('totalDebt', 0)
             free_cashflow = info.get('freeCashflow', 0)
@@ -135,7 +138,7 @@ with tabs[1]:
             }
             st.write("### Debt Ratios")
             st.table(debt_ratios_data)
-
+            
             # Valuation Analysis
             if pe_ratio != 'N/A' and pb_ratio != 'N/A':
                 if pe_ratio < 15 and pb_ratio < 1.5:
@@ -147,24 +150,23 @@ with tabs[1]:
             else:
                 st.error("Insufficient data to determine valuation.")
             st.markdown("---")
-
+            
             # Dividend Analysis
             if dividend_yield > 0:
                 st.write(f"The stock offers a **dividend yield of {dividend_yield:.2f}%**.")
             else:
                 st.write("The stock does not pay a dividend.")
-
         except Exception as e:
             st.error(f"An error occurred: {e}")
 
     if ticker:
-        analyze_stock_fundamentals(ticker)
+        analyze_stock_fundamentals(ticker)      
 
 # Technical Analysis Tab
 with tabs[2]:
     st.header("Stock Information")
     st.write("Analyze and visualize stock performance with indicators and recommendations.")
-
+   
     # Fetch S&P 500 Tickers from Wikipedia
     try:
         sp500_url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"
@@ -174,12 +176,11 @@ with tabs[2]:
         st.error("Failed to fetch S&P 500 tickers. Using a fallback list.")
         sp500_tickers = ["AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"]
 
-    ticker_symbol = st.selectbox("Select Stock Ticker", sp500_tickers, index=sp500_tickers.index("AAPL"))
+    ticker_symbol = st.selectbox("Select Stock Ticker", sp500_tickers, index=sp500_tickers.index("AAPL") if "AAPL" in sp500_tickers else 0)
 
-    # Date slicer
     st.write("### Select Date Range")
     today = date.today()
-    min_date = today - timedelta(days=365 * 5)
+    min_date = today - timedelta(days=365 * 5)  # Allow data up to 5 years back
     max_date = today
     date_range = st.slider(
         "Drag to select the range:",
@@ -190,11 +191,8 @@ with tabs[2]:
     )
     start_date, end_date = date_range
 
-    # Recommendation toggle
     show_recommendation = st.checkbox("Show Recommendation", key="show_recommendation")
 
-    # Indicator toggles
-    st.write("### Select Indicators")
     indicators = {
         "SMA_0_50": st.checkbox("SMA (0-50)", key="show_sma_0_50"),
         "SMA_50_100": st.checkbox("SMA (50-100)", key="show_sma_50_100"),
@@ -214,22 +212,14 @@ with tabs[2]:
                 current_price = data['Close'].iloc[-1]
                 price_change = current_price - data['Close'].iloc[-2]
                 percentage_change = (price_change / data['Close'].iloc[-2]) * 100
-
-                st.markdown(
-                    f"### Current Price: **${current_price:.2f}** "
-                    f"({price_change:+.2f}, {percentage_change:+.2f}%)"
-                )
+                st.markdown(f"### Current Price: **${current_price:.2f}** ({price_change:+.2f}, {percentage_change:+.2f}%)")
 
                 buy_signals = 0
                 total_indicators = 0
 
-                # Create Plotly figure for all charts
                 fig = go.Figure()
-
-                # Line chart for close price
                 fig.add_trace(go.Scatter(x=data.index, y=data['Close'], mode='lines', name="Close Price"))
 
-                # Moving Averages (SMA)
                 if indicators["SMA_0_50"]:
                     sma_0_50 = st.slider("SMA (0-50) Period", 1, 50, 20, key="sma_0_50_period")
                     data['SMA_0_50'] = data['Close'].rolling(window=sma_0_50).mean()
@@ -246,37 +236,26 @@ with tabs[2]:
                         buy_signals += 1
                     total_indicators += 1
 
-                # Add other indicators (RSI, MACD, VWAP)
-                # (Similar to above for RSI, MACD, and VWAP)
-
-                # Show recommendation summary
-                if show_recommendation:
-                    if total_indicators == 0:
-                        st.warning("No technical indicators selected. Please select at least one indicator to see the recommendation.")
-                    else:
-                        st.write("### Recommendation Summary")
-                        st.write(f"Total Indicators: {total_indicators}")
-                        st.write(f"Buy Signals: {buy_signals}")
-                        st.write(f"Sell Signals: {total_indicators - buy_signals}")
-        
-                        if buy_signals > total_indicators / 2:
-                            st.success("**Recommendation: BUY**")
-                        else:
-                            st.warning("**Recommendation: SELL**")
-
-                fig.update_layout(
-                    title=f"{ticker_symbol} Price and Indicators",
-                    xaxis_title="Date",
-                    yaxis_title="Price (USD)",
-                    legend=dict(x=0, y=1.1, orientation="h"),
-                )
+                if indicators["RSI"]:
+                    rsi_period = st.slider("RSI Period", 5, 50, 14, key="rsi_period")
+                    delta = data['Close'].diff()
+                    gain = delta.where(delta > 0, 0)
+                    loss = -delta.where(delta < 0, 0)
+                    avg_gain = gain.rolling(window=rsi_period).mean()
+                    avg_loss = loss.rolling(window=rsi_period).mean()
+                    rs = avg_gain / avg_loss
+                    data['RSI'] = 100 - (100 / (1 + rs))
+                    fig.add_trace(go.Scatter(x=data.index, y=data['RSI'], mode='lines', name="RSI", yaxis="y2"))
+                    if data['RSI'].iloc[-1] < 30:
+                        buy_signals += 1
+                    total_indicators += 1
 
                 st.plotly_chart(fig)
 
         except Exception as e:
-            st.error(f"Failed to retrieve data for {ticker_symbol}. Error: {e}")
+            st.error(f"An error occurred: {e}")
 
-# Optimal Risk Portfolio Tab
+# Risk Portfolio Tab
 with tabs[3]:
     st.title("Optimal Risk Portfolio for Selected Stocks")
 
@@ -418,31 +397,23 @@ with tabs[4]:
     else:
         st.warning("Please select at least one stock.")
 
-# Predictions Tab (Index 5)
+# Predictions Tab
 with tabs[5]:
     st.header("📈 Stock Price Predictions")
     st.write("Use machine learning to predict stock prices for the next few days.")
     
-    # Fetch S&P 500 Tickers from Wikipedia
     sp500_url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"  # Read the table from Wikipedia
-    try:
-        sp500_table = pd.read_html(sp500_url, header=0)[0]  # Get the symbols and sort them
-        sp500_tickers = sorted(sp500_table['Symbol'].tolist())
-    except Exception as e:
-        st.error(f"Error fetching S&P 500 tickers: {e}")
-        sp500_tickers = []
-
-    if sp500_tickers:
-        # User input: Stock ticker and prediction days
-        ticker_for_prediction = st.selectbox("Select stock ticker for prediction:", sp500_tickers, index=sp500_tickers.index("AAPL") if "AAPL" in sp500_tickers else 0)
-        prediction_days = st.slider("Prediction Days", 5, 60, 30)  # Default to 30 days
-        
-        # Prediction button
-        if st.button("Predict"):
-            stock_price_prediction_with_validation(ticker_for_prediction, prediction_days)
-    else:
-        st.warning("Could not fetch S&P 500 tickers. Please try again later.")
-        
+    sp500_table = pd.read_html(sp500_url, header=0)[0]  # Get the symbols and sort them
+    sp500_tickers = sorted(sp500_table['Symbol'].tolist())
+    
+    # User input: Stock ticker and prediction days
+    ticker_for_prediction = st.selectbox("Select stock ticker for prediction:", sp500_tickers, index=sp500_tickers.index("AAPL"))
+    prediction_days = st.slider("Prediction Days", 5, 60, 30)  # Default to 30 days
+    
+    # Prediction button
+    if st.button("Predict"):
+        # Call the prediction function here for Tab 5
+        stock_price_prediction_with_validation(ticker_for_prediction, prediction_days)
 
 def stock_price_prediction_with_validation(ticker, prediction_days=30):
     try:
@@ -610,8 +581,8 @@ with tabs[6]:
             st.error(f"An error occurred while fetching news: {e}")
     else:
         st.info("Enter a stock ticker above to fetch the latest news.")
-
-# Contacts Tab
+   
+# Contact Us Tab
 with tabs[7]:
     st.title("Contact Us")
     # University Information
@@ -648,8 +619,8 @@ with tabs[7]:
         st.write(f"Email: [{dev['email']}](mailto:{dev['email']})")
         st.write(f"GitHub: [{dev['github']}]({dev['github']})")
         st.markdown("---")
-    # Thank you note
+    #Thank you note
     st.write("Thank you for visiting us today 😊.")
-
+    
 # Render the footer on all pages
 render_footer()
