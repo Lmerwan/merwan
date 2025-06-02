@@ -13,3 +13,4 @@ beautifulsoup4
 appdirs
 tensorflow
 scikit-learn
+install lxml
