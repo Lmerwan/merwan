@@ -461,68 +461,61 @@ with tabs[4]:
         st.warning("Please select at least one stock.")
 
 # Predictions Tab (Index 5)
-def crypto_price_prediction_with_indicators_and_direction(ticker, prediction_days=30):
+with tabs[5]:
+    st.header("📈 Stock Price Predictions")
+    st.write("Use machine learning to predict stock prices for the next few days.")
+    
+    sp500_url = "https://en.wikipedia.org/wiki/List_of_S%26P_500_companies"  # Read the table from Wikipedia
+    sp500_table = pd.read_html(sp500_url, header=0)[0]  # Get the symbols and sort them
+    sp500_tickers = sorted(sp500_table['Symbol'].tolist())
+    
+    # User input: Stock ticker and prediction days
+    ticker_for_prediction = st.selectbox("Select stock ticker for prediction:", sp500_tickers, index=sp500_tickers.index("AAPL"))
+    prediction_days = st.slider("Prediction Days", 5, 60, 30)  # Default to 30 days
+    
+    # Prediction button
+    if st.button("Predict"):
+        # Call the prediction function here for Tab 5
+        stock_price_prediction_with_validation(ticker_for_prediction, prediction_days)
+
+def stock_price_prediction_with_validation(ticker, prediction_days=30):
     try:
         # Fetch data
         stock = yf.Ticker(ticker)
-        data = stock.history(period="5y")
+        data = stock.history(period="5y")  # Get 5 years of historical data
         if data.empty:
             st.error("No data available for prediction.")
             return
 
-        st.write(f"### Cryptocurrency Price Prediction for {ticker.upper()} with Technical Indicators and Direction")
-
-        # Add Technical Indicators
-        data['SMA_50'] = data['Close'].rolling(window=50).mean()
-        data['SMA_200'] = data['Close'].rolling(window=200).mean()
-        delta = data['Close'].diff()
-        gain = delta.where(delta > 0, 0)
-        loss = -delta.where(delta < 0, 0)
-        avg_gain = gain.rolling(window=14).mean()
-        avg_loss = loss.rolling(window=14).mean()
-        rs = avg_gain / avg_loss
-        data['RSI'] = 100 - (100 / (1 + rs))
-        short_span, long_span, signal_span = 12, 26, 9
-        data['MACD'] = data['Close'].ewm(span=short_span).mean() - data['Close'].ewm(span=long_span).mean()
-        data['Signal_Line'] = data['MACD'].ewm(span=signal_span).mean()
-        data['VWAP'] = (data['Close'] * data['Volume']).cumsum() / data['Volume'].cumsum()
-
-        # Drop NaN rows from indicator calculation
-        data = data.dropna()
-
-        # Indicator-based signals
-        data['SMA_Buy'] = (data['Close'] > data['SMA_50']).astype(int)
-        data['RSI_Buy'] = (data['RSI'] < 30).astype(int)
-        data['MACD_Buy'] = (data['MACD'] > data['Signal_Line']).astype(int)
-        data['VWAP_Buy'] = (data['Close'] > data['VWAP']).astype(int)
-
-        # Aggregate voting (more than 2/3 indicators suggest "BUY")
-        data['Consensus'] = (data['SMA_Buy'] + data['RSI_Buy'] + data['MACD_Buy'] + data['VWAP_Buy']) >= 3
+        st.write(f"### Stock Price Prediction for {ticker.upper()}")
 
         # Preprocessing: Scale data
+        close_prices = data['Close'].values.reshape(-1, 1)
         scaler = MinMaxScaler(feature_range=(0, 1))
-        features = data[['Close', 'SMA_50', 'SMA_200', 'RSI', 'MACD']].values
-        scaled_data = scaler.fit_transform(features)
+        scaled_data = scaler.fit_transform(close_prices)
 
         # Split into train and test datasets
         train_size = int(len(scaled_data) * 0.8)
         train_data, test_data = scaled_data[:train_size], scaled_data[train_size:]
-        test_consensus = data['Consensus'].iloc[train_size:].values
 
-        # Create sequences for training with multiple features
+        # Create sequences for training
         def create_sequences(data, seq_length=60):
             X, y = [], []
             for i in range(seq_length, len(data)):
-                X.append(data[i - seq_length:i])  # Include all features
-                y.append(data[i, 0])  # Target is still the closing price
+                X.append(data[i - seq_length:i, 0])
+                y.append(data[i, 0])
             return np.array(X), np.array(y)
 
         X_train, y_train = create_sequences(train_data)
         X_test, y_test = create_sequences(test_data)
 
+        # Reshape for LSTM input
+        X_train = X_train.reshape(X_train.shape[0], X_train.shape[1], 1)
+        X_test = X_test.reshape(X_test.shape[0], X_test.shape[1], 1)
+
         # Build LSTM model
         model = Sequential([
-            LSTM(units=50, return_sequences=True, input_shape=(X_train.shape[1], X_train.shape[2])),
+            LSTM(units=50, return_sequences=True, input_shape=(X_train.shape[1], 1)),
             Dropout(0.2),
             LSTM(units=50, return_sequences=False),
             Dropout(0.2),
@@ -531,45 +524,62 @@ def crypto_price_prediction_with_indicators_and_direction(ticker, prediction_day
         model.compile(optimizer='adam', loss='mean_squared_error')
 
         # Train model
-        model.fit(X_train, y_train, epochs=10, batch_size=32, verbose=1)
+        history = model.fit(X_train, y_train, epochs=10, batch_size=32, verbose=1)
 
         # Evaluate model
+        train_predictions = model.predict(X_train)
         test_predictions = model.predict(X_test)
-        test_predictions_rescaled = scaler.inverse_transform(
-            np.hstack([test_predictions, np.zeros((len(test_predictions), features.shape[1] - 1))])
-        )[:, 0]
-        actual_prices_rescaled = scaler.inverse_transform(
-            np.hstack([y_test.reshape(-1, 1), np.zeros((len(y_test), features.shape[1] - 1))])
-        )[:, 0]
 
-        # Directional Accuracy using Indicator Consensus
-        consensus_direction = test_consensus[:-1] == (np.diff(test_predictions_rescaled) > 0)
-        directional_accuracy = np.mean(consensus_direction) * 100
+        # Inverse scale predictions
+        train_predictions_rescaled = scaler.inverse_transform(train_predictions)
+        test_predictions_rescaled = scaler.inverse_transform(test_predictions)
+        actual_prices_rescaled = scaler.inverse_transform(y_test.reshape(-1, 1))
 
-        st.write(f"**Model Evaluation with Indicator-Based Direction:**")
+        # Metrics
+        train_rmse = np.sqrt(mean_squared_error(y_train, train_predictions))
+        test_rmse = np.sqrt(mean_squared_error(y_test, test_predictions))
+        mape = np.mean(np.abs((actual_prices_rescaled - test_predictions_rescaled) / actual_prices_rescaled)) * 100
+        directional_accuracy = np.mean(
+            np.sign(np.diff(actual_prices_rescaled.flatten())) == np.sign(np.diff(test_predictions_rescaled.flatten()))
+        ) * 100
+
+        st.write(f"**Model Evaluation:**")
+        st.write(f"Training RMSE: {train_rmse:.2f}")
+        st.write(f"Testing RMSE: {test_rmse:.2f}")
+        st.write(f"MAPE: {mape:.2f}%")
         st.write(f"Directional Accuracy: {directional_accuracy:.2f}%")
 
         # Prepare future predictions
-        recent_data = scaled_data[-60:]
+        recent_data = scaled_data[-60:]  # Last 60 data points for future predictions
         future_predictions = []
         for _ in range(prediction_days):
-            input_data = recent_data[-60:].reshape(1, -1, features.shape[1])
+            input_data = recent_data[-60:].reshape(1, -1, 1)
             future_price = model.predict(input_data, verbose=0)
             future_predictions.append(future_price[0, 0])
-            recent_data = np.append(recent_data, [np.hstack([future_price[0, 0], [0] * (features.shape[1] - 1)])], axis=0)
+            recent_data = np.append(recent_data, future_price[0, 0])
 
-        future_predictions_rescaled = scaler.inverse_transform(
-            np.hstack([np.array(future_predictions).reshape(-1, 1), np.zeros((len(future_predictions), features.shape[1] - 1))])
-        )[:, 0]
+        # Scale back future predictions
+        future_predictions_rescaled = scaler.inverse_transform(np.array(future_predictions).reshape(-1, 1))
         future_dates = pd.date_range(data.index[-1], periods=prediction_days + 1, freq='B')[1:]
         future_prediction_df = pd.DataFrame({
             'Date': future_dates,
             'Predicted Price': future_predictions_rescaled.flatten()
         })
 
+        # Plot test predictions vs actual
+        st.write("### Test Predictions vs Actual Prices")
+        test_df = pd.DataFrame({
+            'Actual': actual_prices_rescaled.flatten(),
+            'Predicted': test_predictions_rescaled.flatten()
+        }, index=data.index[-len(actual_prices_rescaled):])
+        st.line_chart(test_df)
+
         # Plot future predictions
         st.write("### Future Price Predictions")
         st.line_chart(future_prediction_df.set_index('Date'))
+
+        # Display table of predicted prices
+        st.write("### Predicted Prices for Future Days")
         st.table(future_prediction_df)
 
     except Exception as e:
